@@ -1,0 +1,316 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../index.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+        />
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+    <body onload="loadDepartment()">
+        <br>
+        <br>
+        <br>
+        <div>
+          <div class="navbar-main">
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available;">
+              <li class="nav-item">
+                <a class="nav-link" href="../employees/Page.html">Employees</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link  active" href="./Page.html">Departments</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../shifts/Page.html">Shifts</a>
+              </li>
+            </ul>
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available; justify-content: flex-end;">
+              <li class="nav-item">
+                <a id="name" style="font-weight: bold;" class="nav-link" href="../users/users.html" ></a>
+              </li>
+              <li class="nav-item">
+                <p type="button" onclick="logout(1)" class="nav-link">Logout</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="container w-3">
+          <br/>
+          <h1>Edit Department</h1>
+          <br/>
+          <br/>
+          <div class="wrapper">
+          <form id="EditForm">
+          <div class="login-text" id="loginText" style="position: static; background-color: rgb(235, 228, 255);">
+            <div class="text" id="textSection" style="display: block; margin-top: 10px !important;">
+                <input type="text" id="DepName" name="DepName" required placeholder="Department Name" />
+                <br />
+                <input type="text" id="ManNameInput" name="ManNameInput" required placeholder="Manager Name" />
+                <br />
+                <div id="select-manager" class="select-department-input" required>
+                </div>
+              <br />
+              <button class="login-btn" type="submit" onclick="validation()">Edit</button>
+              <button class="login-btn" type="button" onclick="deleteDepartment()">Delete</button>
+            </div>
+          </div>
+        </form>
+        </div>
+        <br/>
+        <br/>
+        <div style="width: -webkit-fill-available;">
+            <table id="tbl" class="table table-striped" style="text-align: center; margin: auto; max-width: 1000px; color: rgb(2, 2, 87);">
+            </table>
+        </div>
+        <br/>
+        <br/>
+        <div>
+          <h4>Add Employees</h4>
+          <br/>
+          <div id="select-employees" class="select-department-input">
+          </div>
+          <div class="text" style="display: flex; justify-content: center; margin-left: 0px !important;">
+            <button class="login-btn" type="button" style="margin-top: 25px !important;" onclick="addEmpToDep()">Add Me</button>
+          </div>
+          <br/>
+          <br/>
+          <br/>
+
+      </div>
+        </div>
+
+    <script>
+        const url = 'http://localhost:8000'
+        const departmentID = sessionStorage.getItem('departmentId')
+        const userId = sessionStorage.getItem('userId')
+
+          // logout function
+          async function logout(num) {
+            num === 1 ? alert('You sure logout?') : alert('Today, you can\'t enter the system anymore!!!')
+            sessionStorage.clear()
+            window.location.href = '../index.html'
+          }
+
+          // load this department to edit department form
+          async function loadDepartment() {
+
+            const response = await fetch(`${url}/departments/${departmentID}`)
+            const {department} = await response.json()
+            console.log(department)
+
+            // put the values in fields
+            document.getElementById("DepName").value = department.name;
+            document.getElementById("ManNameInput").value = department.manager;
+
+          }
+
+          // validate for new values before editing
+          async function validation() {
+            document.getElementById('EditForm').addEventListener('submit', function (event) {
+              event.preventDefault(); 
+            });
+
+            const DepName = document.getElementById("DepName").value;
+            const ManName = document.getElementById("select-manager").value;
+            console.log(ManName)
+
+            // check the fields
+            if (DepName.length > 0) {
+              await editDepartment()
+            }
+          }
+
+          // edit department function
+          async function editDepartment() {
+            const depUrl = `${url}/departments/${departmentID}`
+
+            const DepName = document.getElementById("DepName").value; 
+            const ManName = document.getElementById("select-manager").value;
+
+            const editDepartment = {
+                Name: DepName
+            }
+
+            // if the manager changes
+            if (ManName !== null && ManName !== 'null' && ManName !== undefined) {
+                editDepartment.Manager = ManName
+                await editEmployeeDep(ManName, departmentID)
+            }
+
+            const response = await fetch(depUrl, {
+              method: "PUT",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify(editDepartment),
+            });
+
+            console.log(response.status);
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            const status = await checkLogout()
+
+            response.status == 200 ? window.location.href = './Page.html' : null;
+          }
+
+          // delete this department
+          async function deleteDepartment() {
+            const id = sessionStorage.getItem('departmentId')
+            const depUrl = `${url}/departments/${id}`
+
+            const response = await fetch(depUrl, {
+                method: 'DELETE',
+                headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            console.log(response.status);
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            const status = await checkLogout()
+
+            response.status == 200 ? window.location.href = './Page.html' : null;
+          }
+
+          // get all the employees to select another manager from them
+          async function getAllEmployees() {
+            const urlDep = `${url}/employees`
+
+            const response = await fetch(urlDep)
+            const {employees} = await response.json()
+
+            console.log(employees)
+
+            const selectManager = document.createElement("select")
+
+            const firstOption = document.createElement("option");
+            firstOption.value = null 
+            firstOption.text = 'choose employee to manager';
+            selectManager.appendChild(firstOption)
+
+            const optionElements = employees.map(async(employee) => {
+              const option = document.createElement("option");
+              option.value = employee.id
+              option.text = employee.name;
+              selectManager.appendChild(option)
+            });
+
+            // selecting an employee to be a manager
+            selectManager.addEventListener('change', function() {
+              document.getElementById("select-manager").value = this.value
+            });
+
+            document.getElementById('select-manager').appendChild(selectManager)
+          }
+
+          // edit a department for this employee
+          async function editEmployeeDep(EmpID, DepID) {
+            const empUrl = `${url}/employees/${EmpID}`
+
+            const editEmployee = {
+                DepartmentID: DepID
+            }
+
+            const response = await fetch(empUrl, {
+              method: "PUT",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify(editEmployee),
+            });
+
+            console.log(response.status);
+          }
+
+          // get all employees who do not exist in this department
+          async function getEmployeesWithOutThisDepartment() {
+            const urlEmp = `${url}/employees/withOutDepartment/${departmentID}`
+
+            const response = await fetch(urlEmp)
+            const {employees} = await response.json()
+
+            console.log(employees)
+
+            const selectEmployee = document.createElement("select")
+
+            const firstOption = document.createElement("option");
+            firstOption.value = null 
+            firstOption.text = 'choose employee';
+            selectEmployee.appendChild(firstOption)
+
+            const optionElements = employees.map(async(employee) => {
+              const option = document.createElement("option");
+              option.value = employee.id
+              option.text = employee.name
+              selectEmployee.appendChild(option)
+            });
+
+            // selecting an employee to add him to this department
+            selectEmployee.addEventListener('change', function() {
+              console.log('You selected: ', this.value);
+              sessionStorage.setItem('empToDep', this.value)
+            });
+
+            document.getElementById('select-employees').appendChild(selectEmployee)
+          }
+          
+          // adding an employee to this department
+          async function addEmpToDep() {
+            const empId = sessionStorage.getItem('empToDep')
+            const adding = await editEmployeeDep(empId, departmentID)
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            await checkLogout()
+
+            window.location.href = './Page.html'
+
+          }
+
+          // add a new action to this user
+          async function addNewAction() {
+            const newAction = {
+              id: userId
+            }
+            
+            const response = await fetch(`${url}/actions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newAction),
+            });
+
+            console.log(response.status);
+          }
+
+          // check if this user should log out becouse he has finished his actions
+          async function checkLogout() {
+            const usersUrl = `${url}/users/logout/${userId}`
+            
+            if (userId !== undefined && userId !== null) {
+              const response = await fetch(usersUrl)
+              const {status} = await response.json()
+              console.log(status);
+
+              if (status === false) {
+                await logout(2)
+              }
+            }
+          }
+
+          // at the top of the page is the name of the user who uses the system
+          const name = sessionStorage.getItem("name");
+          document.getElementById('name').textContent = `Hello ${name}`
+
+          getAllEmployees()
+          getEmployeesWithOutThisDepartment()
+
+        </script>
+    </body>
+</html>

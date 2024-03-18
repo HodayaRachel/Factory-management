@@ -1,0 +1,164 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../index.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+    <body onload="checkLogout()">
+        <br>
+        <br>
+        <br>
+        <div>
+          <div class="navbar-main">
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available;">
+              <li class="nav-item">
+                <a class="nav-link" href="../employees/Page.html">Employees</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../departments/Page.html">Departments</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link  active" href="./Page.html">Shifts</a>
+              </li>
+            </ul>
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available; justify-content: flex-end;">
+              <li class="nav-item">
+                <a id="name" style="font-weight: bold;" class="nav-link" href="../users/users.html" ></a>
+              </li>
+              <li class="nav-item">
+                <p type="button" onclick="logout(1)" class="nav-link">Logout</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="container w-3">
+          <br/>
+          <h1>Add New Shift</h1>
+          <br/>
+          <br/>
+          <div class="wrapper">
+            <form id="AddForm">
+            <div class="login-text" id="loginText" style="position: static; background-color: rgb(235, 228, 255);">
+              <div class="text" id="textSection" style="display: block; margin-top: 10px !important;">
+                <input type="date" id="Date" name="Date" required placeholder="Date" style="padding-right: 2%;" />
+                <br />
+                <input type="number" id="Start" name="Start" min='8' max='22' required placeholder="Starting Hour" />
+                <br />
+                <input type="number" id="End" name="End" min='8' max='22' required placeholder="Ending Hour" />
+                <br />
+                <button class="login-btn" type="submit" onclick="validation()">Add</button>
+                <button class="login-btn" type="submit" onclick="window.location.href = './Page.html'">Cancel</button>
+              </div>
+            </div>
+          </form>
+          </div>
+        </div>
+
+        <script>
+
+          const url = 'http://localhost:8000'
+          const userId = sessionStorage.getItem('userId')
+
+          // logout function
+          async function logout(num) {
+            num === 1 ? alert('You sure logout?') : alert('Today, you can\'t enter the system anymore!!!')
+            sessionStorage.clear()
+            window.location.href = '../index.html'
+          }
+
+          // validate for new values before creating
+          async function validation() {
+            document.getElementById('AddForm').addEventListener('submit', function (event) {
+              event.preventDefault(); 
+            });
+
+            const Date = document.getElementById("Date").value;
+            const Start = +document.getElementById("Start").value;
+            const End = +document.getElementById("End").value;
+
+            // check hours
+            if (Start >= 8 && Start <= 22 && End >= Start  +1 && End <= 22) {
+              await createShift()
+            }
+          }
+
+          // create a new shift
+          async function createShift() {
+
+            const shiftsUrl = `${url}/shifts`
+
+            const Date = document.getElementById("Date").value;
+            const Start = +document.getElementById("Start").value;
+            const End = +document.getElementById("End").value;
+
+            // change the date to dd-mm-yyyy format
+            const [y, m, d] = Date.split('-')
+            const newDate = d + '-' + m + '-' + y
+
+            const newShift = {
+              Date: newDate,
+              StartingHour: Start,
+              EndingHour: End,
+              EmployeesID: [],
+            };
+
+            const response = await fetch(shiftsUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newShift),
+            });
+
+            console.log(response.status);
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            const status = await checkLogout()
+
+            response.status == 200 ? window.location.href = './Page.html' : null;
+          }
+
+          // add a new action
+          async function addNewAction() {
+            const newAction = {
+              id: userId
+            }
+            
+            const response = await fetch(`${url}/actions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newAction),
+            });
+
+            console.log(response.status);
+          }
+
+          // check if this user should log out becouse he has finished his actions
+          async function checkLogout() {
+            const usersUrl = `${url}/users/logout/${userId}`
+            
+            if (userId !== undefined && userId !== null) {
+              const response = await fetch(usersUrl)
+              const {status} = await response.json()
+              console.log(status);
+
+              if (status === false) {
+                await logout(2)
+              }
+            }
+          }
+
+          // at the top of the page is the name of the user who uses the system
+          const name = sessionStorage.getItem("name");
+          document.getElementById('name').textContent = `Hello ${name}`
+
+        </script>
+      </body>
+</html>

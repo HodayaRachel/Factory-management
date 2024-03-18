@@ -1,0 +1,247 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../index.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+    <body onload="getEmployees(null)">
+        <br>
+        <br>
+        <br>
+        <div>
+          <div class="navbar-main">
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available;">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Employees</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../departments/Page.html">Departments</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../shifts/Page.html">Shifts</a>
+              </li>
+            </ul>
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available; justify-content: flex-end;">
+              <li class="nav-item">
+                <a id="name" style="font-weight: bold;" class="nav-link" href="../users/users.html" ></a>
+              </li>
+              <li class="nav-item">
+                <p type="button" onclick="logout(1)" class="nav-link">Logout</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="container w-3">
+          <br/>
+          <h1>Employees</h1>
+          <br/>
+          <br/>
+          <div id="select-department" class="select-department-div" style="margin: auto;">
+            <h4>Filter By Department</h4>
+          </div>
+          <table id="tbl" class="table table-striped" style="text-align: center; margin: auto; max-width: 1000px; color: rgb(2, 2, 87);">
+            <tbody id="tbody-emp">
+              <tr>
+                <th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Full Name</th>
+                <th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Department Name</th>
+                <th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Shifts</th>
+              </tr>
+            </tbody>
+          </table>
+          <br/>
+          <br/>
+          <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; align-content: center; justify-content: center;">
+            <a href="./Add.html" style="display: contents;">
+              <p style="float: right; margin-right: 10%;margin-right: 10px; color: #f55485; margin-top: 0; margin-bottom: 0; font-weight: 600; font-size: x-large;">
+                Add new employee
+              </p>       
+              <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="64" height="64" viewBox="0,0,256,256"
+                style="fill:#000000;">
+                <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="none" stroke-linecap="none" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(2,2)"><path d="M64,16c-26.50967,0 -48,21.49033 -48,48c0,26.50967 21.49033,48 48,48c26.50967,0 48,-21.49033 48,-48c0,-26.50967 -21.49033,-48 -48,-48z" fill="#ffffff" stroke="none" stroke-width="1" stroke-linecap="butt"></path><path d="M64,25c-21.53911,0 -39,17.46089 -39,39c0,21.53911 17.46089,39 39,39c21.53911,0 39,-17.46089 39,-39c0,-21.53911 -17.46089,-39 -39,-39z" fill="#9087f7" stroke="none" stroke-width="1" stroke-linecap="butt"></path><path d="M64,16c-26.50967,0 -48,21.49033 -48,48c0,26.50967 21.49033,48 48,48c26.50967,0 48,-21.49033 48,-48c0,-26.50967 -21.49033,-48 -48,-48z" fill="none" stroke="#5025d1" stroke-width="6" stroke-linecap="butt"></path><path d="M64,42v44M42,64h44" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"></path></g></g>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <script>
+
+          const url = 'http://localhost:8000'
+          const userId = sessionStorage.getItem('userId')
+
+          // logout function
+          async function logout(num) {
+            num === 1 ? alert('You sure logout?') : alert('Today, you can\'t enter the system anymore!!!')
+            sessionStorage.clear()
+            window.location.href = '../index.html'
+          }
+
+          // get all employees and put them in thier table
+          async function getEmployees(department=null) {
+
+            // if filter the employees by department
+            let urlEmp = ''
+            if (department === null || department === 'null') {
+              urlEmp = `${url}/employees`
+              if (department === 'null') {
+                const table = document.getElementById("tbl").innerHTML = '<tbody id="tbody-emp"><tr><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Full Name</th><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Department Name</th><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Shifts</th></tr></tbody>'
+              }
+            } else {
+              urlEmp = `${url}/employees/byDepartment/${department}`;
+              const table = document.getElementById("tbl").innerHTML = '<tbody id="tbody-emp"><tr><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Full Name</th><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Department Name</th><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Shifts</th></tr></tbody>'
+            }
+
+            const response = await fetch(urlEmp);
+            const {employees} = await response.json()
+            console.log(employees);
+
+            // for each employee
+            employees.forEach(async(employee) => {
+              
+              const tr = document.createElement("tr");
+
+              const tdName = document.createElement("td");
+              const tdDepartment = document.createElement("td");
+              const tdShifts = document.createElement("td");
+
+              const selectElement = document.createElement("select")
+
+              const editEmployee = document.createElement('a')
+              editEmployee.href = './Edit.html'; 
+              editEmployee.onclick = () => sessionStorage.setItem('employeeId', employee.id);
+              editEmployee.textContent = employee.name;
+
+              const editDepartment = document.createElement('a')
+              editDepartment.href = '../departments/Edit.html'; 
+              editDepartment.onclick = () => sessionStorage.setItem('departmentId', employee.department);
+
+              if (employee.department !== null && employee.department !== 'null') {
+                console.log(employee.department)
+                editDepartment.textContent = await getDepartmentDetails(employee.department)
+              }
+
+              // list shifts of this employee if there is
+              if (employee?.shifts.length !== 0) {
+                const firstOption = document.createElement("option");
+                firstOption.value = 0
+                firstOption.text = 'list shifts';
+                selectElement.appendChild(firstOption)
+
+                const optionElements = employee.shifts?.map(async(shift) => {
+                  const option = document.createElement("option");
+                  option.value = shift._id
+                  option.text = await formatingDate(shift.Date, shift.StartingHour, shift.EndingHour);
+                  selectElement.appendChild(option)
+                });
+
+                tdShifts.appendChild(selectElement)
+              } else {
+                tdShifts.textContent = null
+              }
+
+              selectElement.style.border = 'none'
+              selectElement.style.textAlign = 'center'
+
+              tdName.appendChild(editEmployee)
+              tdDepartment.appendChild(editDepartment)
+          
+              tr.appendChild(tdName)
+              tr.appendChild(tdDepartment)
+              tr.appendChild(tdShifts)
+
+              document.getElementById('tbl').appendChild(tr)
+            })
+            await addNewAction()
+            await checkLogout()
+          }
+
+          // get all departments to filter by them 
+          async function getAllDepartments() {
+            const urlDep = `${url}/departments`
+
+            const response = await fetch(urlDep)
+            const {departments} = await response.json()
+
+            const selectDepartment = document.createElement("select")
+
+            const firstOption = document.createElement("option");
+            firstOption.value = null 
+            firstOption.text = 'choose department';
+            selectDepartment.appendChild(firstOption)
+
+            const optionElements = departments.map(async(department) => {
+              const option = document.createElement("option");
+              option.value = department.id
+              option.text = department.name;
+              selectDepartment.appendChild(option)
+            });
+
+            selectDepartment.addEventListener('change', function() {
+              console.log('You selected: ', this.value);
+              getEmployees(this.value)
+            });
+
+            document.getElementById('select-department').appendChild(selectDepartment)
+          }
+
+          // get details about the deprtment by id
+          async function getDepartmentDetails(departmentID) {
+            const response = await fetch(`${url}/departments/${departmentID}`)           
+            const {department} = await response.json()
+
+            return department.name
+          }
+
+          // Convert to date and time string format  
+          async function formatingDate(date, startHour, endHour) {
+
+            const StartHours = startHour < 10 ? '0' + startHour : startHour.toString();
+            const EndHours = endHour < 10 ? '0' + endHour : endHour.toString();
+
+            const formattedDate = date + ' ' + StartHours + ':00-' + EndHours + ':00'
+            return formattedDate
+          }
+
+           // add a new action to this user
+           async function addNewAction() {
+            const newAction = {
+              id: userId
+            }
+            
+            const response = await fetch(`${url}/actions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newAction),
+            });
+
+            console.log(response.status);
+          }
+
+          // check if this user should log out becouse he has finished his actions
+          async function checkLogout() {
+            const usersUrl = `${url}/users/logout/${userId}`
+            
+            if (userId !== undefined && userId !== null) {
+              const response = await fetch(usersUrl)
+              const {status} = await response.json()
+              console.log(status);
+
+              if (status === false) {
+                await logout(2)
+              }
+            }
+          }
+
+          // at the top of the page is the name of the user who uses the system
+          const name = sessionStorage.getItem("name");
+          document.getElementById('name').textContent = `Hello ${name}`
+          
+          getAllDepartments()
+
+        </script>
+      </body>
+</html>

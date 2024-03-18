@@ -1,0 +1,94 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="login-text" id="loginText">
+        <div class="text" id="textSection">
+          <a href="" style="background-color: rgb(235, 228, 255) !important;">Login</a>
+          <hr />
+          <br />
+          <input type="text" id="username" name="username" required placeholder="Username" />
+          <br />
+          <input type="email" id="email" name="email" required placeholder="Email" />
+          <br />
+          <button class="login-btn" type="submit" onclick="login()">Login</button>
+        </div>
+      </div>
+      <div class="call-text" id="callText">
+        <h4>you Factory's user?</h4>
+        <h3>you must login website</h3>
+        <button class="loginForm" onclick="loadLogin()">login</button>
+      </div>
+    </div>
+
+    <script>
+      const url = "http://localhost:8000/users"
+
+      // load login form
+      async function loadLogin() {
+
+        const textSection = document.getElementById('textSection');
+        textSection.style.display = "block"
+        textSection.style.position = "static"
+
+        const loginText = document.getElementById('loginText')
+        loginText.style.position = "static";
+        loginText.style.backgroundColor = "#ebe4ff";
+
+        const callText = document.getElementById('callText').style.position = "relative";
+      }
+
+      // login function
+      async function login() {
+
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+
+        const res = await fetch(`${url}/login/${username}/${email}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const result = await res.json()
+        const {status} = result.status
+
+        // if this user exists 
+        if (status === true) { 
+
+          const id = result.status.id
+          const name = result.status.user
+          sessionStorage.setItem('name', name)
+          sessionStorage.setItem('userId', id)
+
+          // check if this user has more actions
+          const resp = await fetch(`${url}/logout/${id}`)
+          const {status} = await resp.json()
+
+          // if user has no more actions today
+          if (status === false) {
+            alert('Today, you can\'t enter the system anymore!!!')
+            document.getElementById("username").value = null
+            document.getElementById("email").value = null
+            
+            sessionStorage.clear()
+            window.location.href = '#'
+
+          } else {
+            window.location.href = './users/users.html';
+          }
+
+        } else {
+          // if this user does not exist
+          alert('This user is not found')
+          document.getElementById("username").value = null
+          document.getElementById("email").value = null
+        }
+      }
+
+    </script>
+  </body>
+</html>

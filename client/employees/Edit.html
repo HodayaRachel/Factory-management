@@ -1,0 +1,381 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../index.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+        />
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+    <body>
+        <br>
+        <br>
+        <br>
+        <div>
+          <div class="navbar-main">
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available;">
+              <li class="nav-item">
+                <a class="nav-link active" href="./Page.html">Employees</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../departments/Page.html">Departments</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../shifts/Page.html">Shifts</a>
+              </li>
+            </ul>
+            <ul class="nav nav-tabs" style="padding: revert; width: -webkit-fill-available; justify-content: flex-end;">
+              <li class="nav-item">
+                <a id="name" style="font-weight: bold;" class="nav-link" href="../users/users.html" ></a>
+              </li>
+              <li class="nav-item">
+                <p type="button" onclick="logout(1)" class="nav-link">Logout</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="container w-3">
+          <br/>
+          <h1>Edit Employee</h1>
+          <br/>
+          <br/>
+          <div class="wrapper">
+          <form id="EditForm">
+          <div class="login-text" id="loginText" style="position: static; background-color: rgb(235, 228, 255);">
+            <div class="text" id="textSection" style="display: block; margin-top: 10px !important;">
+              <input type="text" id="fName" name="fName" placeholder="First Name" />
+              <br />
+              <input type="text" id="lName" name="lName" placeholder="Last Name" />
+              <br />
+              <input type="number" id="startYear" name="startYear" min='1995' max='2024' placeholder="Start Year" />
+              <br />
+              <input type="text" id="department" name="department" placeholder="Department" />
+              <br />
+              <div id="select-department" class="select-department-input">
+              </div>
+              <br />
+              <button class="login-btn" type="submit" onclick="validation()">Edit</button>
+              <button class="login-btn" type="button" onclick="deleteEmployee()">Delete</button>
+            </div>
+          </div>
+        </form>
+        </div>
+        <br/>
+        <br/>
+        <div style="width: -webkit-fill-available;">
+            <table id="tbl" class="table table-striped" style="text-align: center; margin: auto; max-width: 1000px; color: rgb(2, 2, 87);">
+            </table>
+        </div>
+        <br/>
+        <br/>
+        <div>
+            <h4>Add Shifts</h4>
+            <br/>
+            <div id="select-shifts" class="select-department-input">
+            </div>
+            <br/>
+            <br/>
+            <br/>
+
+        </div>
+        <br/>
+        <br/>
+
+        </div>
+
+
+        <script>
+
+          const url = 'http://localhost:8000'
+          const employeeId = sessionStorage.getItem('employeeId');
+          const userId = sessionStorage.getItem('userId')
+
+          // logout function
+          async function logout(num) {
+            num === 1 ? alert('You sure logout?') : alert('Today, you can\'t enter the system anymore!!!')
+            sessionStorage.clear()
+            window.location.href = '../index.html'
+          }
+
+          // load this employee to edit employee form
+          async function loadEmployee() {
+            const resp = await fetch(`${url}/employees/${employeeId}`);
+            const {employee} = await resp.json();
+            console.log(employee)
+
+            // get list shifts of this employee if there is and put them in thier table
+            if (employee.shifts.length !== 0) {
+                const table = document.getElementById("tbl").innerHTML = '<tbody id="tbody-emp"><tr><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Shift Date</th><th class="th-users-tbl" scope="col" style="border: solid 1px #5025d1; text-align: center;">Shift Hours</th></tr></tbody>'
+
+                employee.shifts?.forEach(async(shift) => {
+              
+                    const tr = document.createElement("tr");
+
+                    const tdDate = document.createElement("td");
+                    const tdHours = document.createElement("td");
+
+                    tdDate.textContent = shift.Date;
+                    tdHours.textContent = await formatingHours(shift.StartingHour, shift.EndingHour);
+
+                    tr.appendChild(tdDate)
+                    tr.appendChild(tdHours)
+
+                    document.getElementById('tbl').appendChild(tr)
+                })
+
+            }
+
+            const fullName = employee.name.split(' ')
+
+            // put the values in fields
+            document.getElementById('fName').value = fullName[0];
+            document.getElementById('lName').value = fullName[1];
+            document.getElementById('startYear').value = employee.startWorkYear;
+            let department = 'null'
+            if (employee.department !== null && employee.department !== 'null') {
+                sessionStorage.setItem('employeeDepartment', employee.department)
+                department = await getDepartmentDetails(employee.department)
+            }
+            document.getElementById('department').value = department
+          }
+
+          // get details about the deprtment by id
+          async function getDepartmentDetails(departmentID) {
+            const response = await fetch(`${url}/departments/${departmentID}`)
+            const {department} = await response.json()
+            console.log(department)
+
+            return department.name
+          }
+
+          // change to hour format
+          async function formatingHours(startHour, endHour) {
+
+            const StartHours = startHour < 10 ? '0' + startHour : startHour.toString();
+            const EndHours = endHour < 10 ? '0' + endHour : endHour.toString();
+
+            const formattedHours = StartHours + ':00-' + EndHours + ':00'
+            return formattedHours
+          }
+
+          // validate for new values before editing
+          async function validation() {
+            document.getElementById('EditForm').addEventListener('submit', function (event) {
+              event.preventDefault(); 
+            });
+            const fName = document.getElementById("fName").value;
+            const lName = document.getElementById("lName").value;
+            const startYear = +document.getElementById("startYear").value;
+
+            // check all the fields
+            if (fName.length > 0 && lName.length > 0 && startYear >= 1995 && startYear <= 2024) {
+              await editEmployee(employeeId)
+            }
+          }
+
+          // edit employee function
+          async function editEmployee(employeeId) {
+            const empUrl = `${url}/employees/${employeeId}`
+
+            const fName = document.getElementById("fName").value;
+            const lName = document.getElementById("lName").value;
+            const startYear = +document.getElementById("startYear").value;
+
+            // if the employee department is changed
+            let departmentID = sessionStorage.getItem('employeeDepartment')
+            const chooseDepatment = sessionStorage.getItem('selectDepartment')
+            if (chooseDepatment !== null && chooseDepatment !== 'null') {
+                departmentID = chooseDepatment
+                sessionStorage.setItem('selectDepartment', null)
+            }
+
+            const editEmployee = {
+            FirstName: fName,
+            LastName: lName,
+            StartWorkYear: startYear,
+            DepartmentID: departmentID,
+            };
+
+            const response = await fetch(empUrl, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(editEmployee),
+            });
+
+            console.log(response.status);
+            
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            const status = await checkLogout()
+
+            response.status == 200 ? window.location.href = './Page.html' : null;
+          }
+
+          // delete this employee
+          async function deleteEmployee() {
+
+            const id = sessionStorage.getItem('employeeId')
+            const empUrl = `${url}/employees/${employeeId}`
+
+            const response = await fetch(empUrl, {
+                method: 'DELETE',
+                headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            console.log(response.status);
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            const status = await checkLogout()
+
+            response.status == 200 ? window.location.href = './Page.html' : null;
+          }
+
+          // get all departments
+          async function getAllDepartments() {
+            const urlDep = `${url}/departments`
+
+            const response = await fetch(urlDep)
+            const {departments} = await response.json()
+
+            console.log(departments)
+
+            const selectDepartment = document.createElement("select")
+
+            const firstOption = document.createElement("option");
+            firstOption.value = null 
+            firstOption.text = 'choose department';
+            selectDepartment.appendChild(firstOption)
+
+            const optionElements = departments.map(async(department) => {
+              const option = document.createElement("option");
+              option.value = department.id
+              option.text = department.name;
+              selectDepartment.appendChild(option)
+            });
+
+            // selecting a department to change employee's department to this department
+            selectDepartment.addEventListener('change', function() {
+              console.log('You selected: ', this.value);
+              sessionStorage.setItem('selectDepartment', this.value)
+            });
+
+            document.getElementById('select-department').appendChild(selectDepartment)
+          }
+
+          // get all shifts who do not exist to this employee
+          async function getShiftsWithOutThisEmployee() {
+            const urlDep = `${url}/shifts/byEmloyeeID/${employeeId}`
+
+            const response = await fetch(urlDep)
+            const {shifts} = await response.json()
+
+            console.log(shifts)
+
+            const selectShift = document.createElement("select")
+
+            const firstOption = document.createElement("option");
+            firstOption.value = null 
+            firstOption.text = 'choose shift';
+            selectShift.appendChild(firstOption)
+
+            const optionElements = shifts.map(async(shift) => {
+              const option = document.createElement("option");
+              option.value = shift._id
+              const shiftHours = await formatingHours(shift.StartingHour, shift.EndingHour);
+              option.text = shift.Date + ' ' + shiftHours
+              selectShift.appendChild(option)
+            });
+
+            selectShift.addEventListener('change', function() {
+              console.log('You selected: ', this.value);
+              addEmployeeToShift(this.value)
+            });
+
+            document.getElementById('select-shifts').appendChild(selectShift)
+          }
+
+          // add this employee to the selected shift
+          async function addEmployeeToShift(shiftID) {
+            const shiftUrl = `${url}/shifts/${shiftID}`
+
+            const resp = await fetch(shiftUrl)
+            const {shift} = await resp.json()
+
+            let employeesList = shift.EmployeesID
+            employeesList.push(employeeId)
+
+            const editShift = {
+                EmployeesID: employeesList
+            };
+            
+            const response = await fetch(shiftUrl, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(editShift),
+            });
+
+            console.log(response.status);
+            console.log(await response.text());
+
+            response.status == 200 ? alert('The shift added') : null;
+
+            // add a new action and check if this user completes their actions
+            await addNewAction()
+            await checkLogout()
+            
+            loadEmployee()
+            window.location.reload() 
+          }
+
+          // add a new action to this user
+          async function addNewAction() {
+            const newAction = {
+              id: userId
+            }
+            
+            const response = await fetch(`${url}/actions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newAction),
+            });
+
+            console.log(response.status);
+          }
+
+          // check if this user should log out becouse he has finished his actions
+          async function checkLogout() {
+            const usersUrl = `${url}/users/logout/${userId}`
+            
+            if (userId !== undefined && userId !== null) {
+              const response = await fetch(usersUrl)
+              const {status} = await response.json()
+              console.log(status);
+
+              if (status === false) {
+                await logout(2)
+              }
+            }
+          }
+
+          // at the top of the page is the name of the user who uses the system
+          const name = sessionStorage.getItem("name");
+          document.getElementById('name').textContent = `Hello ${name}`
+
+          getAllDepartments()
+          getShiftsWithOutThisEmployee()
+          loadEmployee()
+
+        </script>
+      </body>
+</html>
